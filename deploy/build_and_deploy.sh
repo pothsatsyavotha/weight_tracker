@@ -1,21 +1,24 @@
 #!/usr/bin/env bash
-# Usage: ./build_and_deploy.sh /path/to/your/flutter_project
-# Optional: APP_KEY=yourkey ./build_and_deploy.sh /path/to/project
+# ./build_and_deploy.sh stage   -> build the app and upload a PREVIEW (staging)
+# ./build_and_deploy.sh prod    -> publish what is currently in public/ to PRODUCTION
 set -e
-PROJECT="${1:?Pass the path to your Flutter project}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
+PROJECT="$HERE/.."
+MODE="${1:-}"
 
-cd "$PROJECT"
-flutter config --enable-web >/dev/null
-[ -d web ] || flutter create . --platforms=web
-if [ -n "$APP_KEY" ]; then
-  flutter build web --release --dart-define=APP_KEY="$APP_KEY"
-else
+if [ "$MODE" = "stage" ]; then
+  cd "$PROJECT"
+  flutter config --enable-web >/dev/null
   flutter build web --release
+  rm -rf "$HERE/public"/*
+  cp -r build/web/* "$HERE/public/"
+  rm -f "$HERE/public/vercel.json"
+  cd "$HERE"
+  vercel
+elif [ "$MODE" = "prod" ]; then
+  cd "$HERE"
+  vercel --prod
+else
+  echo "Use: ./build_and_deploy.sh stage   or   ./build_and_deploy.sh prod"
+  exit 1
 fi
-
-rm -rf "$HERE/public"/*
-cp -r build/web/* "$HERE/public/"
-
-cd "$HERE"
-vercel --prod
