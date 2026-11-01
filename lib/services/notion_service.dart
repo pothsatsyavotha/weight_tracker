@@ -8,14 +8,13 @@ import 'notion_writes.dart';
 export '../models/weight_entry.dart';
 export 'notion_exception.dart';
 
-/// Talks to the Notion API. Reading lives here; add/update/delete
-/// come from [NotionWrites].
+/// Reads go through the Vercel proxy. add/update/delete come from [NotionWrites].
 ///
 /// Notion database must have these properties:
 ///   Name   (Title)
-///   Date   (Date)    <- no trailing space!
+///   Date   (Date)
 ///   Weight (Number)
-///   User   (Text)    <- owner username (new)
+///   User   (Text)
 class NotionService extends NotionBase with NotionWrites {
   NotionService({super.client});
 
@@ -27,7 +26,7 @@ class NotionService extends NotionBase with NotionWrites {
     String? cursor;
     do {
       final res = await client.post(
-        Uri.parse('$baseUrl/databases/$databaseId/query'),
+        api('query'),
         headers: headers,
         body: jsonEncode({
           'page_size': 100,

@@ -3,34 +3,29 @@ import 'package:http/http.dart' as http;
 
 import 'notion_exception.dart';
 
-/// Shared config + helpers used by the read and write parts of the service.
+/// Shared helpers. All Notion calls now go through the Vercel proxy
+/// (/api/notion), so the Notion token never ships inside the app.
 abstract class NotionBase {
-  static const _token = String.fromEnvironment('NOTION_TOKEN');
-  static const _databaseId = String.fromEnvironment('NOTION_DATABASE_ID');
-  static const _baseUrl = 'https://api.notion.com/v1';
+  // Leave empty on the deployed web app (same domain).
+  // For testing from a phone/desktop: --dart-define=API_BASE=https://your-app.vercel.app
+  static const _apiBase = String.fromEnvironment('API_BASE');
+  // Optional shared key, must match APP_KEY in Vercel.
+  static const _appKey = String.fromEnvironment('APP_KEY');
 
   final http.Client client;
   NotionBase({http.Client? client}) : client = client ?? http.Client();
 
-  String get baseUrl => _baseUrl;
-  String get databaseId => _databaseId;
+  Uri api(String path) => Uri.parse('$_apiBase/api/notion?path=$path');
 
   Map<String, String> get headers => {
-    'Authorization': 'Bearer $_token',
-    'Notion-Version': '2022-06-28',
     'Content-Type': 'application/json',
+    if (_appKey.isNotEmpty) 'x-app-key': _appKey,
   };
 
-  void checkConfig() {
-    if (_token.isEmpty || _databaseId.isEmpty) {
-      throw NotionException(
-        'Missing Notion config. Run with --dart-define-from-file=env.json',
-      );
-    }
-  }
+  void checkConfig() {} // configuration now lives on the server
 
   Never fail(http.Response r) {
-    String msg = 'Notion error ${r.statusCode}';
+    String msg = 'Server error ${r.statusCode}';
     try {
       msg = jsonDecode(r.body)['message'] ?? msg;
     } catch (_) {}
