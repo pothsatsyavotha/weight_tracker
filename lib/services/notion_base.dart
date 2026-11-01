@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'notion_exception.dart';
 
@@ -8,7 +9,10 @@ import 'notion_exception.dart';
 abstract class NotionBase {
   // Leave empty on the deployed web app (same domain).
   // For testing from a phone/desktop: --dart-define=API_BASE=https://your-app.vercel.app
-  static const _apiBase = String.fromEnvironment('API_BASE');
+  static const _apiBase = String.fromEnvironment(
+    'API_BASE',
+    defaultValue: kIsWeb ? '' : 'https://weighttracker-eight.vercel.app',
+  );
   // Optional shared key, must match APP_KEY in Vercel.
   static const _appKey = String.fromEnvironment('APP_KEY');
 
